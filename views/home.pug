@@ -1,0 +1,9 @@
+extends layout
+block page
+	if (infowindow)
+		- var menu = 'infowindow'
+	else
+		- var menu = 'home'
+block content
+	if (infowindow)
+		include infowindow

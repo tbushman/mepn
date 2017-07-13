@@ -1,0 +1,221 @@
+doctype html
+html
+	head
+		title= appTitle
+		meta(charset='UTF-8')
+		meta(name='viewport', content='width=device-width, initial-scale=1, maximum-scale=1')
+		link(rel='stylesheet', href='/stylesheets/leaflet.css')
+		link(rel='stylesheet', href='/stylesheets/styles.css')
+		script(type='text/javascript', src='/scripts/jquery.min.js')
+		script(type='text/javascript', src='/scripts/leaflet.js')
+		script(type='text/javascript', src='http://maps.stamen.com/js/tile.stamen.js?v1.3.0')
+		script(type='text/javascript', src='/scripts/d3.v3.min.js')
+	body
+		block page
+		block header
+			div.menu
+				a(href='/', class=(menu === 'home' && !infowindow ? 'active' : '')) Home
+				a(href='/addfeature', class=(infowindow === 'point' ? 'active' : '')) Add
+				//-
+					a.draw(href='/addshape', class=(infowindow === 'shape' ? 'active' : '')) Draw
+				button.heat Heat
+		block content
+		canvas#heatmap
+		div#map
+		
+		script(type='text/javascript').
+			// http://maps.stamen.com/#terrain
+			var stamenLayer = new L.StamenTileLayer('terrain');
+			// http://leafletjs.com/reference-1.1.0.html
+			var map = new L.map('map', {
+				zoomControl: true,
+				center: [#{lat}, #{lng}],
+				zoom: #{zoom},
+				minZoom: 2,
+				maxZoom: 18
+			});
+			
+			var center = map.getCenter();
+			var lMarker, tL, bR;
+			// Stamen base map
+			map.addLayer(stamenLayer);
+			// Server data
+			var data = !{JSON.stringify(data)};
+			var canvas = document.getElementById('heatmap');
+			if (data.length > 0) {
+				// generate geographic points from data
+				var dataLayer = L.geoJSON(data, {
+					// MongoDB stores coordinates as [lng, lat]
+					// Leaflet uses [lat, lng]
+					onEachFeature: function (feature) {
+						if (feature.geometry.type === 'Point') {
+							feature.geometry.coordinates.reverse()							
+						}
+					},
+					pointToLayer: function (feature, latlng) {
+						if (feature.geometry.type = 'Point') {
+							var geojsonMarkerOptions = {
+								radius: 11,
+								fillColor: '#BAD80A',
+								color: '#fff',
+								weight: 2,
+								opacity: 1,
+								fillOpacity: 0.8,
+								className: ''+map.latLngToLayerPoint(latlng).x+','+map.latLngToLayerPoint(latlng).y+''
+							};
+							var circleMarker = L.circleMarker(latlng, geojsonMarkerOptions);
+							return circleMarker;
+						}
+					}
+				}).addTo(map);
+				var bounds = dataLayer.getBounds();
+				var nE = bounds._northEast, sW = bounds._southWest;
+				var topLeft = map.latLngToLayerPoint(new L.LatLng(nE.lat, sW.lng));
+				var bottomRight = map.latLngToLayerPoint(new L.LatLng(sW.lat, nE.lng));
+				tL = [topLeft.x, topLeft.y];
+				bR = [bottomRight.x, bottomRight.y];
+				console.log(bounds, topLeft, bottomRight)
+			}
+			// moveable marker
+			lMarker = L.marker([center.lat, center.lng], {draggable: true}).addTo(map);
+				//pan upon drag
+			lMarker.on('dragend', function(event){
+				var marker = event.target;
+				var position = marker.getLatLng();
+				marker.setLatLng(new L.LatLng(position.lat, position.lng),{draggable:'true'});
+				map.panTo(new L.LatLng(position.lat, position.lng));
+				$.post('/panzoom/'+position.lat+'/'+position.lng+'/'+map.getZoom()+'');
+				canvas.style.display = 'none';
+			});
+			/*map.on('mousemove', function(event){
+				console.log(event) 
+				// logs Object { originalEvent: mousemove, containerPoint: Object, layerPoint: Object, latlng: Object, type: "mousemove", target: Object }
+			})*/
+			var focalStats = function(x, y, sum){
+				for (var i = x - 10; i < x + 10; i++) {
+					for (var j = y - 10; j < y + 10; j++) {
+						// for every feature within the window for [x,y], inc sum for [x,y] by 1
+						if (document.getElementsByClassName(''+i+','+j+'').length > 0) {
+							sum += document.getElementsByClassName(''+i+','+j+'').length;
+						}
+					}
+				}
+				var red, green, blue, alpha;
+				switch(sum) {
+					case 0:
+						red = 255;
+						green = 255;
+						blue = 255;
+						alpha = 0;
+						break;
+					case 1:
+						red = 100;
+						green = 200;
+						blue = 235;
+						alpha = 255;
+						break;
+					case 2:
+						red = 175;
+						green = 230;
+						blue = 160;
+						alpha = 255;
+						break;
+					case 3:
+						red = 250;
+						green = 230;
+						blue = 20;
+						alpha = 255;
+						break;
+					case 4:
+						red = 255;
+						green = 140;
+						blue = 0;
+						alpha = 255;
+						break;
+					case 5:
+						red = 255;
+						green = 0;
+						blue = 0;
+						alpha = 255;
+						break;
+					default:
+						break;
+				}
+				return {
+					red: red,
+					green: green,
+					blue: blue,
+					alpha: alpha,
+					sum: sum
+				}
+			}
+			
+			function heatMap() {
+				// Get the canvas and context
+				canvas.style.display = 'block';
+				var context = canvas.getContext('2d');
+				// Define the image dimensions
+				var width = parseInt(canvas.getBoundingClientRect().width, 10);
+				var height = parseInt(canvas.getBoundingClientRect().height, 10);
+				canvas.setAttribute('width', width);
+				canvas.setAttribute('height', height);
+				// Create an ImageData object
+				var imagedata = context.createImageData(width, height);
+				console.log(tL, bR);
+				// reduce processing by only performing focal stats on dataLayer bounds
+				// for each pixel (x,y) in bounds plus 10px buffer
+				for (var x = tL[0] - 10; x < bR[0] + 10; x++) {
+					for (var y = tL[1] - 10; y < bR[1] + 10; y++) {
+						// imagedata index for each pixel in bounds
+						var pxX = (y * width + x) * 4;
+						var red, green, blue, alpha;
+						var initSum = document.getElementsByClassName(''+x+','+y+'').length;
+						// moving window
+						// http://desktop.arcgis.com/en/arcmap/10.3/tools/spatial-analyst-toolbox/how-focal-statistics-works.htm
+						var focals = focalStats(x, y, initSum);
+						// http://rembound.com/articles/drawing-pixels-with-html5-canvas-and-javascript
+						imagedata.data[pxX] = focals.red;
+						imagedata.data[pxX + 1] = focals.green;
+						imagedata.data[pxX + 2] = focals.blue;
+						imagedata.data[pxX + 3] = focals.alpha;
+					}
+				}
+				context.putImageData(imagedata, 0, 0);
+			}
+			document.getElementsByClassName('heat')[0].addEventListener('click', function(){
+				heatMap()				
+			});
+			// wip polygon
+			var latlngs = [];
+			var polygon;
+			var draw = document.getElementsByClassName('draw')[0]
+			draw.addEventListener('click', function(e){
+				draw.innerHTML = 'Finished';
+				draw.className = 'stop';				
+				var stop = document.getElementsByClassName('stop')[0];
+				stop.addEventListener('click', function(){
+					stop.innerHTML = 'Draw';
+					stop.className = 'draw';
+					//$.post('/addshape/')
+					//polygon = new L.polygon(latlngs).addTo(map);
+					//latlngs = [];
+				})
+			});
+						
+			map.on('click', function(e){
+				var button = document.getElementsByTagName('BUTTON')[0].className;
+				
+				switch(button) {
+					case 'stop':
+						console.log(button)
+						latlngs.push([e.latlng.lng, e.latlng.lat])
+						console.log(latlngs)
+						break;
+					case 'draw':
+						console.log(button)
+						
+						break;
+					default:
+						console.log(button);
+				}
+			})

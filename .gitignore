@@ -1,0 +1,8 @@
+.DS_Store
+.env
+# Dependency directory
+node_modules
+# Database
+mepndb
+!mepndb/db
+mepndb/db/*
