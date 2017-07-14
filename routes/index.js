@@ -119,4 +119,58 @@ router.post('/panzoom/:lat/:lng/:zoom', function(req, res, next){
 	})
 })
 
+router.get('/addfeature', function(req, res, next) {
+	Content.find({}, function(err, data){
+		if (err) {
+			return next(err)
+		}
+		User.findOne({_id: req.app.locals.user._id}, function(err, user){
+			if (err) {
+				return next(err)
+			}
+			return res.render('home', {
+				infowindow: 'point',
+				data: [].map.call(data, function(doc){return doc}),
+				lat: user.position.lat,
+				lng: user.position.lng,
+				zoom: user.position.zoom,
+				info: 'drag the feature to the desired location'
+			})
+		})
+	})
+})
+
+router.post('/addcontent/:id', upload.array(), function(req, res, next){
+	var entry;
+	User.findOne({_id: req.app.locals.user._id}, function(err, user){
+		if (err) {
+			return next(err)
+		}
+		var body = req.body;
+		var keys = Object.keys(body);
+		var id = parseInt(req.params.id, 10);
+		entry = {
+			_id: id,
+			type: 'Feature',
+			properties: {},
+			geometry: {
+				type: 'Point',
+				coordinates: [user.position.lng, user.position.lat]
+			}
+		}
+		keys.map(function(key){
+			return entry.properties[key] = body[key]
+		});
+
+		var newentry = new Content(entry)
+
+		newentry.save(function(err, doc){
+			if (err) {
+				console.log(err);  // handle errors!
+			}
+			return res.redirect('/')
+		})
+	})
+})
+
 module.exports = router;

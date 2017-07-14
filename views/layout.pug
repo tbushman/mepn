@@ -14,8 +14,7 @@ html
 		block header
 			div.menu
 				a(href='/', class=(menu === 'home' && !infowindow ? 'active' : '')) Home
-				//-
-					a(href='/addfeature', class=(infowindow === 'point' ? 'active' : '')) Add
+				a(href='/addfeature', class=(infowindow === 'point' ? 'active' : '')) Add
 				//-
 					a.draw(href='/addshape', class=(infowindow === 'shape' ? 'active' : '')) Draw
 				//- 
