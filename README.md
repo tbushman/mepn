@@ -1,4 +1,4 @@
-# mepn 
+# mepn
 A mapping exercise.
 
 To get the starter map working:
@@ -12,4 +12,4 @@ To get the starter map working:
 8. If you see the message, 'waiting for connections on port 27017', proceed. If not, you may have other MongoDB processes running.
 9. In a third Terminal window, type `cd path/to/your/folder`
 10. From this third Terminal window, type `mongo`
-11. If all goes well, you can go back to the first Terminal window and enter `npm start`
+11. If all goes well, you can go back to the first Terminal window and enter `npm start`, open a browser window and go to url 'localhost:2222'
