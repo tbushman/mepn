@@ -2,6 +2,3 @@
 .env
 # Dependency directory
 node_modules
-# Database
-mepndb/db/*
-!mepndb/db
