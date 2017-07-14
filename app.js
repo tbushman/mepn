@@ -12,7 +12,7 @@ var http = require('http');
 
 dotenv.load();
 
-var uri = process.env.DEVDB;
+var uri = 'mongodb://localhost/mepn';
 var promise = mongoose.connect(uri, {
 	useMongoClient: true
 })
@@ -22,7 +22,7 @@ promise.then(function(db){
 
 var app = express();
 
-app.set('port', process.env.PORT);
+app.set('port', '2222');
 
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
@@ -58,7 +58,6 @@ app.use(session(sess));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', routes);
-
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
