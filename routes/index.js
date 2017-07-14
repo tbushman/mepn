@@ -10,12 +10,19 @@ var spawn = require('child_process').spawn;
 // Mongoose models
 var Content = require('../models/content.js');
 var User = require('../models/user.js');
+// D3 for parsing csv
+var d3 = require('d3');
 // Multipart form
 var multer = require('multer');
 // Ensure .env access
 var dotenv = require('dotenv');
 // Init multer
 var upload = multer();
+/*var storage = multer.diskStorage({
+	destination: 'csv/',
+	filename: Date.now() + '.csv'
+});
+var uploadmedia = multer({storage: storage});*/
 //always
 dotenv.load();
 // Unofficial Google Geolocation module
@@ -94,6 +101,75 @@ router.get('/geolocate', function(req, res, next){
 		})
 	});
 });
+
+router.get('/importcsv', function(req, res, next){
+	fs.readFile(path.join(__dirname, '../public/csv/grocery.csv'), 'utf8', function (err, content) {
+		if (err) {
+			return console.log(err)
+		}
+		//console.log('content: '+content)
+		var json = d3.csvParse(content);
+		console.log(json)
+		for (var i in json) {
+			var entry = new Content({
+				_id: i,
+				type: 'Feature',
+				properties: {
+					title: json[i].name
+				},
+				geometry: {
+					type: 'Point',
+					coordinates: [parseFloat(json[i].longitude), parseFloat(json[i].latitude)]
+				}
+			})
+			entry.save(function(err){
+				if (err) {
+					console.log(err)
+				}
+			})
+		}
+		Content.find({}, function(err, data) {
+			if (err) {
+				return next(err)
+			}
+			if (!err && data.length === 0) {
+				return res.redirect('/addfeature')
+			}
+			return res.render('home', {
+				data: [].map.call(data, function(doc){return doc}),
+				lat: users[0].position.lat,
+				lng: users[0].position.lng,
+				zoom: users[0].position.zoom
+			})
+		})
+	})
+})
+
+router.get('/uploadcsv', function(req, res, next){
+	Content.find({}, function(err, data){
+		if (err) {
+			return next(err)
+		}
+		User.findOne({_id: req.app.locals.user._id}, function(err, user){
+			if (err) {
+				return next(err)
+			}
+			return res.render('home', {
+				infowindow: 'uploadcsv',
+				data: [].map.call(data, function(doc){return doc}),
+				lat: user.position.lat,
+				lng: user.position.lng,
+				zoom: user.position.zoom,
+				info: 'Upload a csv file with "latitude" and "longitude" columns'
+			})
+		})
+	})
+})
+
+/*router.post('/uploadcsv', uploadmedia.single('uploadcsv'), function(req, res, next){
+	var uploadedPath = req.file.path;
+	console.log(uploadedPath)
+})*/
 
 // Each time marker moves, update user location
 router.post('/panzoom/:lat/:lng/:zoom', function(req, res, next){
