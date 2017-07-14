@@ -1,6 +1,10 @@
 var express = require('express');
-var router = express.Router();
+var fs = require('fs');
+var path = require('path');
 var url = require('url');
+var router = express.Router();
+// For parsing csv
+var d3 = require('d3');
 // For geolocation process
 var spawn = require('child_process').spawn;
 // Mongoose models
@@ -116,6 +120,50 @@ router.post('/panzoom/:lat/:lng/:zoom', function(req, res, next){
 			return next(err)
 		}
 		return res.send('ok')
+	})
+})
+
+router.get('/importcsv', function(req, res, next){
+	fs.readFile(path.join(__dirname, '../public/csv/grocery.csv'), 'utf8', function (err, content) {
+		if (err) {
+			return console.log(err)
+		}
+		//console.log('content: '+content)
+		var json = d3.csvParse(content);
+		for (var i in json) {
+			var entry = new Content({
+				_id: i,
+				type: 'Feature',
+				properties: {
+					title: json[i].name
+				},
+				geometry: {
+					type: 'Point',
+					coordinates: [parseFloat(json[i].longitude), parseFloat(json[i].latitude)]
+				}
+			})
+			entry.save(function(err){
+				if (err) {
+					console.log(err)
+				}
+			})
+		}
+		User.find({}, function(err, users) {
+			if (err) {
+				return next(err)
+			}
+			Content.find({}, function(err, data) {
+				if (err) {
+					return next(err)
+				}
+				return res.render('home', {
+					data: [].map.call(data, function(doc){return doc}),
+					lat: users[0].position.lat,
+					lng: users[0].position.lng,
+					zoom: users[0].position.zoom
+				})
+			})
+		})
 	})
 })
 
