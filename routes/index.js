@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var url = require('url');
+// For geolocation process
 var spawn = require('child_process').spawn;
 // Mongoose models
 var Content = require('../models/content.js');
@@ -90,6 +91,7 @@ router.get('/geolocate', function(req, res, next){
 	});
 });
 
+// Each time marker moves, update user location
 router.post('/panzoom/:lat/:lng/:zoom', function(req, res, next){
 	var zoom = parseInt(req.params.zoom, 10);
 	var lat = parseFloat(req.params.lat);
