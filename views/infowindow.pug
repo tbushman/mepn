@@ -1,17 +1,7 @@
-//-
-  svg.svgbox(viewbox="0 0 50 50", xmlns="http://www.w3.org/2000/svg")
-    g(fill="#fff")
-      if (infowindow === 'new')
-        foreignObject(x='50%', y='50%', width='10px', height='10px')
-          form(enctype="multipart/form-data", method="POST", action="/addcontent/"+(id+1)+"")
-            label
-            input(type="text")
-      rect.infowindow(x="50%", y="50%", width="50%", height="50%")
-
 div.infowindow
-  form(enctype="multipart/form-data", method="POST", action="/addcontent/"+data.length+"")
-    label(for="title") Title
-    input(type="text", name="title")
-    label(for="description") Description
-    input(type="text", name="description")
-    button(type="submit") Submit
+	form(enctype="multipart/form-data", method="POST", action="/addcontent/"+data.length+"")
+		label(for="title") Title
+		input(type="text", name="title")
+		label(for="description") Description
+		input(type="text", name="description")
+		button(type="submit") Submit
