@@ -119,4 +119,36 @@ router.post('/panzoom/:lat/:lng/:zoom', function(req, res, next){
 	})
 })
 
+router.get('/focus/:id/:y/:x', function(req, res, next){
+	var id = parseInt(req.params.id, 10);
+	var y = parseInt(req.params.y, 10);
+	var x = parseInt(req.params.x, 10);
+	User.find({}, function(err, users){
+		if (err) {
+			return next(err)
+		}
+		Content.findOne({_id: id}, function(err, doc){
+			if (err) {
+				return next(err)
+			}
+			Content.find({}, function(err, data){
+				if (err) {
+					return next(err)
+				}
+				console.log(doc, x, y)
+				return res.render('home', {
+					infowindow: 'tooltip',
+					data: [].map.call(data, function(doc){return doc}),
+					doc: doc,
+					lat: doc.geometry.coordinates[1],
+					lng: doc.geometry.coordinates[0],
+					x: x,
+					y: y,
+					zoom: 11
+				})
+			})
+		})
+	})
+})
+
 module.exports = router;

@@ -16,8 +16,7 @@ html
 				a(href='/', class=(menu === 'home' && !infowindow ? 'active' : '')) Home
 				//-
 					a(href='/addfeature', class=(infowindow === 'point' ? 'active' : '')) Add
-				//-
-					a.draw(href='/addshape', class=(infowindow === 'shape' ? 'active' : '')) Draw
+				a.draw(href='/addshape', class=(infowindow === 'shape' ? 'active' : '')) Draw
 				//- 
 					button.heat Heat
 		block content
@@ -60,13 +59,24 @@ html
 								weight: 2,
 								opacity: 1,
 								fillOpacity: 0.8,
-								className: ''+map.latLngToLayerPoint(latlng).x+','+map.latLngToLayerPoint(latlng).y+''
+								className: feature._id+'@'+map.latLngToLayerPoint(latlng).x+','+map.latLngToLayerPoint(latlng).y+''
 							};
 							var circleMarker = L.circleMarker(latlng, geojsonMarkerOptions);
 							return circleMarker;
 						}
 					}
 				}).addTo(map);
+				dataLayer.on('click', function(event) {
+					console.log(event.originalEvent.srcElement.classList[0])
+					var id = event.originalEvent.srcElement.classList[0].split('@')[0];
+					var latlng = event.latlng;
+					var x = map.latLngToLayerPoint(latlng).x;
+					var y = map.latLngToLayerPoint(latlng).y;
+					console.log(map.latLngToLayerPoint(latlng))
+					$.get('/focus/'+id+'/'+y+'/'+x+'').done(function(data){
+						window.location.href = '/focus/'+id+'/'+y+'/'+x+''
+					})
+				})
 			}
 			// moveable marker
 			lMarker = L.marker([center.lat, center.lng], {draggable: true}).addTo(map);
@@ -78,3 +88,14 @@ html
 				map.panTo(new L.LatLng(position.lat, position.lng));
 				$.post('/panzoom/'+position.lat+'/'+position.lng+'/'+map.getZoom()+'');
 			});
+			
+			//$(document).on('click', '.leaflet-interactive', function(event){
+			//document.getElementsByClassName('leaflet-interactive').addEventListener('click', function(event){
+				//console.log($(event.originalEvent.path[0].className[0]))
+				//var id = event.originalEvent.explicitOriginalTarget.getAttribute('className').split('@')[0];
+				//var x = event.originalEvent.explicitOriginalTarget.getAttribute('className').split(',').split('@')[1];
+				//var y = event.originalEvent.explicitOriginalTarget.getAttribute('className').split(',')[1];
+				//$.get('/focus/'+id+'/'+y+'/'+x+'').done(function(data){
+				//	window.location.href = '/focus/'+id+'/'+y+'/'+x+''
+				//})
+			//})

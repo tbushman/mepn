@@ -1,7 +1,8 @@
-div.infowindow
-	form(enctype="multipart/form-data", method="POST", action="/addcontent/"+data.length+"")
-		label(for="title") Title
-		input(type="text", name="title")
-		label(for="description") Description
-		input(type="text", name="description")
-		button(type="submit") Submit
+//-
+	svg.svgbox(viewbox='0 0 50 50', xmlns="http://www.w3.org/2000/svg")
+	//-
+	g
+		text(font-size='10', style='display: inline-block; position: relative') #{doc.properties.title}
+	g(fill='#fff')
+		rect.infowindow(x='50%', y='50%', width='50%', height='50%')
+div.infowindow(style='top: '+y+'; left: '+x+'; position: fixed', width='100', height='100')
