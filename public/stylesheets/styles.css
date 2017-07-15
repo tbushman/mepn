@@ -44,7 +44,7 @@ a, button {
 	pointer-events: none;
 }
 
-.infowindow {
+.infowindow, .tooltip {
 	width: 30%;
 	height: 30%;
 	display: inline-block;

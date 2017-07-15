@@ -136,16 +136,27 @@ router.get('/focus/:id/:y/:x', function(req, res, next){
 					return next(err)
 				}
 				console.log(doc, x, y)
-				return res.render('home', {
+				var sendData = {
 					infowindow: 'tooltip',
 					data: [].map.call(data, function(doc){return doc}),
 					doc: doc,
-					lat: doc.geometry.coordinates[1],
-					lng: doc.geometry.coordinates[0],
+					lat: users[0].position.lat,
+					lng: users[0].position.lng,
+					zoom: users[0].position.zoom,
 					x: x,
-					y: y,
-					zoom: 11
-				})
+					y: y
+				}
+				return res.send(JSON.parse(JSON.stringify(sendData)))
+/*				return res.render('home', {
+					infowindow: 'tooltip',
+					data: [].map.call(data, function(doc){return doc}),
+					doc: doc,
+					lat: users[0].position.lat,
+					lng: users[0].position.lng,
+					zoom: users[0].position.zoom,
+					x: x,
+					y: y
+				})*/
 			})
 		})
 	})
