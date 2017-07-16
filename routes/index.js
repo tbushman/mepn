@@ -33,7 +33,7 @@ router.get('/', function (req, res, next) {
 				return next(err)
 			}
 			return res.render('home', {
-				data: [].map.call(data, function(doc){return doc}),
+				data: data,
 				lat: users[0].position.lat,
 				lng: users[0].position.lng,
 				zoom: users[0].position.zoom
